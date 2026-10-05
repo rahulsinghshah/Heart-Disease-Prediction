@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Disease Predictor</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 10px;
+        }
+
+        .card {
+            background: #fff;
+            padding: 30px 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 620px;
+            max-width: 100%;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #1f2937;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 20px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .field-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 11px 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fff;
+            color: #111827;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, opacity 0.2s;
+            margin-top: 20px;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 14px 18px;
+            border-radius: 8px;
+            font-size: 15px;
+            display: none;
+            line-height: 1.5;
+        }
+
+        .result-box.high-risk {
+            display: block;
+            background-color: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+
+        .result-box.low-risk {
+            display: block;
+            background-color: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+
+        .result-box.error-box {
+            display: block;
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+        }
+
+        .disclaimer {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 11px;
+            color: #6b7280;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 580px) {
+            .card {
+                padding: 24px 20px;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Heart Disease Predictor</h2>
+        <p class="subtitle">Enter patient health indicators to assess cardiovascular disease risk.</p>
+
+        <form method="post" id="predict-form">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="field-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="features[]" placeholder="e.g. 55" min="1" max="120" required>
+                </div>
+
+                <div class="field-group">
+                    <label for="sex">Sex</label>
+                    <select name="features[]" id="sex" required>
+                        <option value="">Select Sex</option>
+                        <option value="1">Male</option>
+                        <option value="0">Female</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label for="cp">Chest Pain Type</label>
+                    <select name="features[]" id="cp" required>
+                        <option value="">Select Chest Pain</option>
+                        <option value="0">0 - Typical Angina</option>
+                        <option value="1">1 - Atypical Angina</option>
+                        <option value="2">2 - Non-anginal Pain</option>
+                        <option value="3">3 - Asymptomatic</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label for="trestbps">Resting Blood Pressure</label>
+                    <input type="number" id="trestbps" name="features[]" placeholder="mm Hg (e.g. 130)" min="50" max="300" required>
+                </div>
+
+                <div class="field-group">
+                    <label for="chol">Serum Cholesterol</label>
+                    <input type="number" id="chol" name="features[]" placeholder="mg/dl (e.g. 240)" min="50" max="700" required>
+                </div>
+
+                <div class="field-group">
+                    <label for="fbs">Fasting Blood Sugar</label>
+                    <select name="features[]" id="fbs" required>
+                        <option value="">Fasting Blood Sugar</option>
+                        <option value="1">&gt; 120 mg/dL (High)</option>
+                        <option value="0">&le; 120 mg/dL (Normal)</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label for="restecg">Resting ECG Results</label>
+                    <select name="features[]" id="restecg" required>
+                        <option value="">Resting ECG</option>
+                        <option value="0">0 - Normal</option>
+                        <option value="1">1 - ST-T Abnormality</option>
+                        <option value="2">2 - Left Ventricular Hypertrophy</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label for="thalach">Max Heart Rate</label>
+                    <input type="number" id="thalach" name="features[]" placeholder="bpm (e.g. 150)" min="50" max="250" required>
+                </div>
+
+                <div class="field-group">
+                    <label for="exang">Exercise Induced Angina</label>
+                    <select name="features[]" id="exang" required>
+                        <option value="">Exercise Angina</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label for="oldpeak">ST Depression (oldpeak)</label>
+                    <input type="number" id="oldpeak" name="features[]" step="0.1" placeholder="e.g. 1.5" min="0" max="10" required>
+                </div>
+
+                <div class="field-group">
+                    <label for="slope">Slope of Peak ST</label>
+                    <select name="features[]" id="slope" required>
+                        <option value="">Select Slope</option>
+                        <option value="0">0 - Upsloping</option>
+                        <option value="1">1 - Flat</option>
+                        <option value="2">2 - Downsloping</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label for="ca">Major Vessels (ca)</label>
+                    <select name="features[]" id="ca" required>
+                        <option value="">Number of Vessels</option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+
+                <div class="field-group" style="grid-column: span 2;">
+                    <label for="thal">Thalassemia Type</label>
+                    <select name="features[]" id="thal" required>
+                        <option value="">Select Thalassemia</option>
+                        <option value="0">0 - Normal</option>
+                        <option value="1">1 - Fixed Defect</option>
+                        <option value="2">2 - Reversible Defect</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn">Predict Risk</button>
+        </form>
+
+        <div id="result-box" class="result-box"></div>
+
+        <p class="disclaimer">
+            This project is for educational purposes only and is not a medical diagnostic tool.
+        </p>
+    </div>
+
+    <script>
+        const form = document.getElementById("predict-form");
+        const submitBtn = document.getElementById("submit-btn");
+        const resultBox = document.getElementById("result-box");
+
+        form.onsubmit = async function(event) {
+            event.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Analyzing Indicators...";
+            resultBox.className = "result-box";
+            resultBox.style.display = "none";
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch("/api/predict/", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (response.ok && data.status === "success") {
+                    const isHigh = data.prediction === 1;
+                    resultBox.className = "result-box " + (isHigh ? "high-risk" : "low-risk");
+                    const probText = data.risk_percentage !== undefined ? ` (Risk Probability: ${data.risk_percentage}%)` : "";
+                    resultBox.innerHTML = `<strong>${data.message}${probText}</strong><br><small style="opacity:0.85">Model: Logistic Regression</small>`;
+                } else {
+                    resultBox.className = "result-box error-box";
+                    resultBox.innerHTML = `⚠️ <strong>Error:</strong> ${data.error || "Failed to get prediction."}`;
+                }
+            } catch (err) {
+                resultBox.className = "result-box error-box";
+                resultBox.innerHTML = "⚠️ <strong>Connection Error:</strong> Could not connect to prediction service.";
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Predict Risk";
+            }
+        };
+    </script>
+</body>
+</html>
